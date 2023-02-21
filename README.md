@@ -1,7 +1,5 @@
 # shelldoc: Test Unix shell commands in Markdown documentation
 
-[![Build Status](https://ci.endocode.com/buildStatus/icon?job=QMSTR/shelldoc-autotests/master)](https://ci.endocode.com/job/QMSTR/job/shelldoc-autotests/job/master/)
-
 Markdown is widely used for documentation and README.md files that
 explain how to use or build some software. Such documentation often
 contains shell commands that explain how to build the software or how to
@@ -29,9 +27,9 @@ output matches the specificaton:
 
 ~~~shell
 % shelldoc run README.md
-SHELLDOC: doc-testing "go/src/github.com/endocode/shelldoc/README.md" ...
+SHELLDOC: doc-testing "go/src/github.com/mirkoboehm/shelldoc/README.md" ...
  CMD (1): echo Hello                                ?  Hello                      :  PASS (match)
- CMD (2): go get -u github.com/endocode/shelldo...  ?  ...                        :  PASS (match)
+ CMD (2): go get -u github.com/mirkoboehm/shell...  ?  ...                        :  PASS (match)
  CMD (3): export GREETING="Hello World"             ?  (no response expected)     :  PASS (execution successful)
  CMD (4): echo $GREETING                            ?  Hello World                :  PASS (match)
 SUCCESS: 4 tests (4 successful, 0 failures, 0 execution errors)
@@ -48,7 +46,7 @@ prompt indicator without triggering a ``shelldoc`` test.
 
 The usual way to install ``shelldoc`` is using `go get`:
 
-	$ go get -u github.com/endocode/shelldoc/cmd/shelldoc
+	$ go get -u github.com/mirkoboehm/shelldoc/cmd/shelldoc
 	...
 
 Executing documentation may have side effects. For example, running
@@ -144,7 +142,7 @@ expected response.
 
 ## Output formats and integration into CI systems
 
-By default, ``shelldoc`` produces human-readable output. Additionally, ``shelldoc`` can create a results file in the _JunitXML_ format. This format is natively understood by many continuous integration (CI) systems, like for example [Jenkins](https://jenkins.io/). The output file is specified using the ``--xml`` argument. This feature is demonstrated in [shelldoc's own CI](https://ci.endocode.com/view/QMSTR/job/QMSTR/job/shelldoc-autotests/) and the ``Jenkinsfile`` in the repository.
+By default, ``shelldoc`` produces human-readable output. Additionally, ``shelldoc`` can create a results file in the _JunitXML_ format. This format is natively understood by many continuous integration (CI) systems, like for example [Jenkins](https://jenkins.io/). The output file is specified using the ``--xml`` argument.
 
 ## Contributing
 
@@ -155,7 +153,7 @@ is invited to use, study, modify and redistribute it. To contribute to
 ``shelldoc``, feel free to fork it and submit pull requests, or to
 submit issues in
 the
-[``shelldoc`` issue tracker](https://github.com/endocode/shelldoc/issues). All
+[``shelldoc`` issue tracker](https://github.com/mirkoboehm/shelldoc/issues). All
 contributions are welcome.
 
 To report a bug, the best way is to submit a Markdown file and a
@@ -165,9 +163,7 @@ description of how the Markdown file should be interpreted, and how
 ## Authors and license
 
 ``shelldoc`` was developed
-by [Mirko Boehm](http://www.creative-destruction.org). Commercial support,
-if necessary, is provided
-by [Endocode](https://endocode.com/).
+by [Mirko Boehm](http://www.creative-destruction.org).
 
 The command line programs of ``shelldoc`` are located in the `cmd/`
 subdirectory and licensed under the terms of the GPL, version 3. The
