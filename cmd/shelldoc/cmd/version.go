@@ -1,5 +1,5 @@
 // This file is part of shelldoc.
-// © 2019, Mirko Boehm <mirko@endocode.com> and the shelldoc contributors
+// © 2023, Mirko Boehm <mirko@kde.org> and the shelldoc contributors
 // SPDX-License-Identifier: GPL-3.0
 
 package cmd
@@ -7,7 +7,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/endocode/shelldoc/pkg/version"
+	"github.com/mirkoboehm/shelldoc/pkg/version"
 	"github.com/spf13/cobra"
 )
 

@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/endocode/shelldoc/pkg/junitxml"
-	"github.com/endocode/shelldoc/pkg/shell"
-	"github.com/endocode/shelldoc/pkg/tokenizer"
-	"github.com/endocode/shelldoc/pkg/version"
+	"github.com/mirkoboehm/shelldoc/pkg/junitxml"
+	"github.com/mirkoboehm/shelldoc/pkg/shell"
+	"github.com/mirkoboehm/shelldoc/pkg/tokenizer"
+	"github.com/mirkoboehm/shelldoc/pkg/version"
 )
 
 func max(a, b int) int { // really, golang?
