@@ -3,3 +3,5 @@ debug
 debug.test
 # VS Code configuration
 .vscode/
+# The generated VERSION file
+VERSION
