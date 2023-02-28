@@ -1,7 +1,7 @@
 package run
 
 // This file is part of shelldoc.
-// © 2018, Mirko Boehm <mirko@endocode.com> and the shelldoc contributors
+// © 2023, Mirko Boehm <mirko@kde.org> and the shelldoc contributors
 // SPDX-License-Identifier: Apache-2.0
 
 import (

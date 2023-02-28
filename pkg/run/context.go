@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/endocode/shelldoc/pkg/junitxml"
+	"github.com/mirkoboehm/shelldoc/pkg/junitxml"
 )
 
 // Context contains the context of an execution of the run subcommand.
