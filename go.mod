@@ -1,4 +1,4 @@
-module github.com/endocode/shelldoc
+module github.com/mirkoboehm/shelldoc
 
 go 1.12
 
