@@ -29,7 +29,7 @@ output matches the specificaton:
 % shelldoc run README.md
 SHELLDOC: doc-testing "go/src/github.com/mirkoboehm/shelldoc/README.md" ...
  CMD (1): echo Hello                                ?  Hello                      :  PASS (match)
- CMD (2): go get -u github.com/mirkoboehm/shell...  ?  ...                        :  PASS (match)
+ CMD (2): go install github.com/mirkoboehm/shel...  ?  ...                        :  PASS (match)
  CMD (3): export GREETING="Hello World"             ?  (no response expected)     :  PASS (execution successful)
  CMD (4): echo $GREETING                            ?  Hello World                :  PASS (match)
 SUCCESS: 4 tests (4 successful, 0 failures, 0 execution errors)
@@ -44,13 +44,15 @@ prompt indicator without triggering a ``shelldoc`` test.
 
 ## Installation
 
-The usual way to install ``shelldoc`` is using `go get`:
+The usual way to install ``shelldoc`` is using `go install`:
 
-	$ go get -u github.com/mirkoboehm/shelldoc/cmd/shelldoc
-	...
+```shell {shelldocwhatever}
+$ go install github.com/mirkoboehm/shelldoc/cmd/shelldoc@latest
+...
+```
 
 Executing documentation may have side effects. For example, running
-this `go get` command just installed the latest version of ``shelldoc``
+this `go install` command just installed the latest version of ``shelldoc``
 in your system. Containers or VMs can be used to isolate such side
 effects.
 
