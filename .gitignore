@@ -5,3 +5,5 @@ debug.test
 .vscode/
 # The generated VERSION file
 VERSION
+cmd/shelldoc/shelldoc
+results.xml
