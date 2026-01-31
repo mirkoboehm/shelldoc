@@ -35,10 +35,11 @@ func (context *Context) ReturnCode() int {
 // WriteXML writes the test results to the specified XML output file
 func (context *Context) WriteXML() error {
 	if len(context.XMLOutputFile) > 0 {
-		file, err := os.OpenFile(context.XMLOutputFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+		file, err := os.OpenFile(context.XMLOutputFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			return fmt.Errorf("unable to open XML output file for writing: %v", err)
 		}
+		defer file.Close()
 		if err := context.Suites.Write(file); err != nil {
 			return fmt.Errorf("error writing XML output file: %v", err)
 		}
