@@ -84,8 +84,6 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 		testcase.Classname = inputfile // testcase is always returned, even if err is not nil
 		if context.ReplaceDots {
 			testcase.Classname = strings.ReplaceAll(inputfile, ".", "●")
-		} else {
-			testcase.Classname = inputfile // testcase is always returned, even if err is not nil
 		}
 		if err != nil {
 			fmt.Printf(" --  ERROR: %v", err)
