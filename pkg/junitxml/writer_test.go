@@ -2,7 +2,6 @@ package junitxml
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -12,7 +11,7 @@ import (
 )
 
 func openTmpFile() (*os.File, error) {
-	file, err := ioutil.TempFile("", "write_test-*.xml")
+	file, err := os.CreateTemp("", "write_test-*.xml")
 	if err != nil {
 		return nil, fmt.Errorf("unable to open temporary output file: %v", err)
 	}

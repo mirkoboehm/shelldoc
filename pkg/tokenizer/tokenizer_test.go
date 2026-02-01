@@ -5,7 +5,7 @@ package tokenizer
 // SPDX-License-Identifier: Apache-2.0
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	blackfriday "github.com/russross/blackfriday/v2"
@@ -20,7 +20,7 @@ func codeBlockHandler(visitor *Visitor, node *blackfriday.Node) blackfriday.Walk
 	return blackfriday.GoToNext
 }
 func TestEchoTrue(t *testing.T) {
-	data, err := ioutil.ReadFile("samples/echotrue.md")
+	data, err := os.ReadFile("samples/echotrue.md")
 	require.NoError(t, err, "Unable to read sample data file")
 	visitor := Visitor{codeBlockHandler, codeBlockHandler, nil}
 	require.Zero(t, echoTrueCodeBlockCount, "Starting the counter")
@@ -29,7 +29,7 @@ func TestEchoTrue(t *testing.T) {
 }
 
 func TestTokenizeEchoTrue(t *testing.T) {
-	data, err := ioutil.ReadFile("samples/echotrue.md")
+	data, err := os.ReadFile("samples/echotrue.md")
 	require.NoError(t, err, "Unable to read sample data file")
 	visitor := NewInteractionVisitor()
 	Tokenize(data, visitor)
@@ -37,7 +37,7 @@ func TestTokenizeEchoTrue(t *testing.T) {
 }
 
 func TestTokenizeHelloWorld(t *testing.T) {
-	data, err := ioutil.ReadFile("samples/helloworld.md")
+	data, err := os.ReadFile("samples/helloworld.md")
 	require.NoError(t, err, "Unable to read sample data file")
 	visitor := NewInteractionVisitor()
 	Tokenize(data, visitor)
@@ -53,7 +53,7 @@ func TestTokenizeHelloWorld(t *testing.T) {
 }
 
 func TestTokenizeFenced(t *testing.T) {
-	data, err := ioutil.ReadFile("samples/fenced.md")
+	data, err := os.ReadFile("samples/fenced.md")
 	require.NoError(t, err, "Unable to read sample data file")
 	visitor := NewInteractionVisitor()
 	Tokenize(data, visitor)
