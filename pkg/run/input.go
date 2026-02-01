@@ -26,9 +26,7 @@ func ReadInput(args []string) ([]byte, error) {
 	}
 	result, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		if err != nil {
-			return nil, fmt.Errorf("unable to read from stdin: %v", err)
-		}
+		return nil, fmt.Errorf("unable to read from stdin: %v", err)
 	}
 	return result, nil
 }
