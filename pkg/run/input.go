@@ -6,7 +6,7 @@ package run
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -16,7 +16,7 @@ func ReadInput(args []string) ([]byte, error) {
 	if len(args) > 0 {
 		var result []byte
 		for _, filename := range args {
-			content, err := ioutil.ReadFile(filename)
+			content, err := os.ReadFile(filename)
 			if err != nil {
 				return nil, fmt.Errorf("unable to read file %s", filename)
 			}
@@ -24,7 +24,7 @@ func ReadInput(args []string) ([]byte, error) {
 		}
 		return result, nil
 	}
-	result, err := ioutil.ReadAll(os.Stdin)
+	result, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		if err != nil {
 			return nil, fmt.Errorf("unable to read from stdin: %v", err)

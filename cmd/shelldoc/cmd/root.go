@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 
@@ -44,7 +44,7 @@ func initLogging() {
 	if verbose {
 		log.SetOutput(os.Stderr)
 	} else {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 	log.SetFlags(0)
 	log.SetPrefix("Note: ")
