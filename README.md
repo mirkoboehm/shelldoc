@@ -1,5 +1,7 @@
 # shelldoc: Test Unix shell commands in Markdown documentation
 
+[![CI](https://github.com/mirkoboehm/shelldoc/actions/workflows/ci.yml/badge.svg)](https://github.com/mirkoboehm/shelldoc/actions/workflows/ci.yml)
+
 Markdown is widely used for documentation and README.md files that
 explain how to use or build some software. Such documentation often
 contains shell commands that explain how to build the software or how to
