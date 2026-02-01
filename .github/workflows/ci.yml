@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -22,3 +25,10 @@ jobs:
         run: go test ./...
       - name: Selftest
         run: make selftest
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Selftest Results
+          path: results.xml
+          reporter: java-junit
