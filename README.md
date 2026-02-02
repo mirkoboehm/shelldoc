@@ -157,6 +157,35 @@ expected response.
 
 By default, ``shelldoc`` produces human-readable output. Additionally, ``shelldoc`` can create a results file in the _JunitXML_ format. This format is natively understood by many continuous integration (CI) systems, like for example [Jenkins](https://jenkins.io/). The output file is specified using the ``--xml`` argument.
 
+## Limitations
+
+- **No command timeout**: Commands can run indefinitely. If a command
+  hangs, ``shelldoc`` will wait forever. Ensure your documented
+  commands complete in a reasonable time.
+- **Shared shell session**: All commands in a Markdown file run in the
+  same shell session, allowing commands to depend on each other (e.g.,
+  setting variables, changing directories). Be aware that earlier
+  commands affect the environment for later ones.
+- **Sequential processing**: Files are processed one at a time.
+  Parallel execution is not supported.
+
+## Security considerations
+
+``shelldoc`` executes shell commands from Markdown files. This has
+security implications:
+
+- **Commands run with your permissions**: Any command in the Markdown
+  file executes with the same privileges as the user running
+  ``shelldoc``. If you are not sure you can trust the documentation,
+  only run ``shelldoc`` in a contained environment, e.g., a container
+  or a VM.
+- **Environment persistence**: Environment variables and shell state
+  persist between commands within a file. This is by design, but be
+  aware that earlier commands can affect later ones.
+- **No sandboxing**: Commands can modify the filesystem, network, and
+  system state. Use containers or VMs when testing untrusted
+  documentation.
+
 ## Contributing
 
 *shelldoc*
