@@ -7,12 +7,16 @@ import (
 )
 
 func (testsuites JUnitTestSuites) Write(w io.Writer) error {
-	io.WriteString(w, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+	if _, err := io.WriteString(w, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"); err != nil {
+		return fmt.Errorf("failed to write XML header: %w", err)
+	}
 	enc := xml.NewEncoder(w)
 	enc.Indent("", "\t")
 	if err := enc.Encode(testsuites); err != nil {
-		fmt.Printf("unable to write XML document: %v", err)
+		return fmt.Errorf("failed to encode XML document: %w", err)
 	}
-	io.WriteString(w, "\n")
+	if _, err := io.WriteString(w, "\n"); err != nil {
+		return fmt.Errorf("failed to write XML footer: %w", err)
+	}
 	return nil
 }
