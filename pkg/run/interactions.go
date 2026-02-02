@@ -95,7 +95,9 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 			context.RegisterReturnCode(returnFailure)
 			testcase.RegisterFailure(result(returnFailure), interaction.Result(), interaction.DescribeFull())
 		}
-		suite.RegisterTestCase(*testcase)
+		if err := suite.RegisterTestCase(*testcase); err != nil {
+			return nil, fmt.Errorf("failed to register test case: %w", err)
+		}
 		if interaction.HasFailure() && context.FailureStops {
 			log.Printf("Stop requested after first failed test.")
 			break

@@ -141,17 +141,19 @@ func (suite *JUnitTestSuite) ErrorCount() int {
 }
 
 // RegisterTestCase registers a test case with the test suite. The test count increments.
-func (suite *JUnitTestSuite) RegisterTestCase(testcase JUnitTestCase) {
+// Returns an error if internal constraints are violated.
+func (suite *JUnitTestSuite) RegisterTestCase(testcase JUnitTestCase) error {
 	suite.Tests++
 	suite.TestCases = append(suite.TestCases, testcase)
 	if suite.Tests != suite.TestCount() {
-		panic(fmt.Sprintf("internal constraint violated - Tests and TestCases mismatch: %v", suite))
+		return fmt.Errorf("internal constraint violated - Tests and TestCases mismatch: %v", suite)
 	}
 	if testcase.Failure != nil {
 		suite.Failures++
 	} else if testcase.Error != nil {
 		suite.Errors++
 	}
+	return nil
 }
 
 // RegisterElapsedTime saves the elapsed time  in string format.
