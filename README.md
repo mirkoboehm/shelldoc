@@ -4,11 +4,10 @@
 
 Markdown is widely used for documentation and README.md files that
 explain how to use or build some software. Such documentation often
-contains shell commands that explain how to build the software or how to
-run it. To make sure the documentation is accurate and up-to-date, it
-should be automatically tested. ``shelldoc`` tests Unix shell commands
-in Markdown files and reports the results.
-
+contains shell commands that explain how to build the software or how
+to run it. To make sure the documentation is accurate and up-to-date,
+it should be automatically tested. ``shelldoc`` tests Unix shell
+commands in Markdown files and reports the results.
 
 ## Basic usage
 
@@ -43,6 +42,16 @@ cause an infinite recursion when evaluating the README.md using
 ``shelldoc``. Try it :-) The percent symbol is commonly used as a shell
 prompt next to  _$_ or a _>_. It can be used in documentation as a
 prompt indicator without triggering a ``shelldoc`` test.
+
+The XML output file allows for test results can be integrated into CI
+workflows. Review the "Selftest Results" section for any of the
+workflow runs of the pull request action in this repository for an
+example:
+
+![A sample visualization of the shelldoc selftest results for this
+README page](assets/shelldoc-testresults-visualization.png "selftest
+results")
+
 
 ## Installation
 
