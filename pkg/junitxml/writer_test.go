@@ -20,7 +20,7 @@ func openTmpFile() (*os.File, error) {
 
 func removeTmpFile(filepath string) {
 	const variable = "SHELLDOC_TEST_KEEP_TEMPORARY_FILES"
-	if _, isSet := os.LookupEnv(variable); isSet == true {
+	if _, isSet := os.LookupEnv(variable); isSet {
 		fmt.Printf("%s is set, not removing temporary file %s\n", variable, filepath)
 		return
 	}
