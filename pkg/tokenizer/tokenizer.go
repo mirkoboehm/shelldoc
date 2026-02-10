@@ -135,7 +135,7 @@ func handleFencedCodeBlock(visitor *Visitor, node *blackfriday.Node) blackfriday
 	return blackfriday.GoToNext
 }
 
-// NewInteractionVisitor creates a visitor configured with the default ineraction parser
+// NewInteractionVisitor creates a visitor configured with the default interaction parser
 func NewInteractionVisitor() *Visitor {
 	visitor := new(Visitor)
 	visitor.CodeBlock = handleCodeBlock
