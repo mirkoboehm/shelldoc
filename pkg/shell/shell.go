@@ -83,7 +83,7 @@ func (shell *Shell) ExecuteCommand(command string) ([]string, int, error) {
 			beginFound = true
 			continue
 		}
-		if beginFound == false {
+		if !beginFound {
 			continue
 		}
 		match := endRx.FindStringSubmatch(line)
