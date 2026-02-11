@@ -13,13 +13,6 @@ import (
 	"github.com/mirkoboehm/shelldoc/pkg/version"
 )
 
-func max(a, b int) int { // really, golang?
-	if a > b {
-		return a
-	}
-	return b
-}
-
 const (
 	returnSuccess = iota // the test succeeded
 	returnFailure        // the test failed (a problemn with the test)
