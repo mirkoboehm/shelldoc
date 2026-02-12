@@ -195,7 +195,6 @@ func TestInteractionResult(t *testing.T) {
 		{ResultExecutionError, nil, "ERROR (result not evaluated)"},
 		{ResultMatch, nil, "PASS (execution successful)"},
 		{ResultMatch, []string{"hello"}, "PASS (match)"},
-		{ResultRegexMatch, nil, "PASS (regex match)"},
 		{ResultMismatch, nil, "FAIL (mismatch)"},
 		{ResultError, nil, "FAIL (execution failed)"},
 		{999, nil, "YOU FOUND A BUG!!11!1!"},
@@ -220,7 +219,6 @@ func TestInteractionHasFailure(t *testing.T) {
 		{NewInteraction, false},
 		{ResultExecutionError, false},
 		{ResultMatch, false},
-		{ResultRegexMatch, false},
 		{ResultMismatch, true},
 		{ResultError, true},
 	}
@@ -264,11 +262,6 @@ func TestElideString(t *testing.T) {
 	require.Equal(t, "short", elideString("short", 20))
 	require.Equal(t, "this is...", elideString("this is a long string", 10))
 	require.Equal(t, "tiny", elideString("tiny", 5))
-}
-
-func TestCompareRegex(t *testing.T) {
-	interaction := &Interaction{}
-	require.False(t, interaction.compareRegex([]string{"any"}))
 }
 
 func TestTokenizeMultipleCommands(t *testing.T) {

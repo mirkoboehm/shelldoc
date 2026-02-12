@@ -22,8 +22,6 @@ const (
 	ResultError
 	// ResultMatch means the output directly matched the expected output
 	ResultMatch
-	// ResultRegexMatch means the output matched the alternative regex
-	ResultRegexMatch
 	// ResultMismatch indicates that the output from the command did not match expectations in any way
 	ResultMismatch
 )
@@ -34,7 +32,6 @@ type Interaction struct {
 	Cmd string
 	// Response contains the expected response from the shell, in plain text
 	Response []string
-	//AlternativeRegEx string
 	// Language contains the language specified if the interaction was extracted from a fenced code block
 	Language string
 	// Attributes contains the shelldoc attributes specified in a fenced code block
@@ -86,8 +83,6 @@ func (interaction *Interaction) Result() string {
 			return "PASS (execution successful)"
 		}
 		return "PASS (match)"
-	case ResultRegexMatch:
-		return "PASS (regex match)"
 	case ResultMismatch:
 		return "FAIL (mismatch)"
 	case ResultError:
@@ -156,18 +151,11 @@ func (interaction *Interaction) Execute(shell *shell.Shell) error {
 	} else if interaction.evaluateResponse(output) {
 		interaction.ResultCode = ResultMatch
 		interaction.Comment = ""
-	} else if interaction.compareRegex(output) {
-		interaction.ResultCode = ResultRegexMatch
 	} else {
 		interaction.ResultCode = ResultMismatch
 		interaction.Comment = ""
 	}
 	return nil
-}
-
-func (interaction *Interaction) compareRegex(output []string) bool {
-	// match, err := regexp.MatchString(interaction.AlternativeRegEx, output); err
-	return false
 }
 
 func elideString(text string, length int) string {
