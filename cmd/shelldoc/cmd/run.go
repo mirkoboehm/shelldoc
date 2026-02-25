@@ -27,6 +27,7 @@ func init() {
 	runCmd.Flags().BoolVarP(&context.FailureStops, "fail", "f", false, "Stop on the first failure")
 	runCmd.Flags().StringVarP(&context.XMLOutputFile, "xml", "x", "", "Write results to the specified output file in JUnitXML format")
 	runCmd.Flags().BoolVarP(&context.ReplaceDots, "replace-dots-in-xml-classname", "d", true, "When using filenames as classnames, replace dots with a unicode circle")
+	runCmd.Flags().BoolVarP(&context.DryRun, "dry-run", "n", false, "Preview commands without executing them")
 	rootCmd.AddCommand(runCmd)
 }
 

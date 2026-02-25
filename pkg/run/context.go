@@ -15,6 +15,7 @@ type Context struct {
 	FailureStops  bool
 	XMLOutputFile string
 	ReplaceDots   bool
+	DryRun        bool
 	Files         []string
 	// output variables
 	Suites     junitxml.JUnitTestSuites
