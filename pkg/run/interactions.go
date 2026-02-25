@@ -35,6 +35,28 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 	suite := &junitxml.JUnitTestSuite{Name: inputfile}
 	suite.AddProperty("shelldoc-version", version.Version())
 	defer junitxml.RegisterElapsedTime(time.Now(), &suite.Time)
+	// read input data
+	data, err := ReadInput([]string{inputfile})
+	if err != nil {
+		return nil, fmt.Errorf("unable to read input data: %v", err)
+	}
+	// run the input through the tokenizer
+	visitor := tokenizer.NewInteractionVisitor()
+	tokenizer.Tokenize(data, visitor)
+
+	// dry-run mode: just list the commands without executing them
+	if context.DryRun {
+		fmt.Printf("SHELLDOC: dry-run \"%s\" ...\n", inputfile)
+		magnitude := int(math.Log10(float64(len(visitor.Interactions)))) + 1
+		counterFormat := fmt.Sprintf("%%%ds", magnitude+2)
+		opener := fmt.Sprintf(" CMD %s: %%s\n", counterFormat)
+		for index, interaction := range visitor.Interactions {
+			fmt.Printf(opener, fmt.Sprintf("(%d)", index+1), interaction.Cmd)
+		}
+		fmt.Printf("Found %d commands (dry-run, not executed)\n", len(visitor.Interactions))
+		return suite, nil
+	}
+
 	// detect shell
 	shellpath, err := shell.DetectShell(context.ShellName)
 	if err != nil {
@@ -46,14 +68,6 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 		return nil, fmt.Errorf("unable to start shell: %v", err)
 	}
 	defer shell.Exit()
-	// read input data
-	data, err := ReadInput([]string{inputfile})
-	if err != nil {
-		return nil, fmt.Errorf("unable to read input data: %v", err)
-	}
-	// run the input through the tokenizer
-	visitor := tokenizer.NewInteractionVisitor()
-	tokenizer.Tokenize(data, visitor)
 	// execute the interactions and verify the results:
 	fmt.Printf("SHELLDOC: doc-testing \"%s\" ...\n", inputfile)
 	// construct the opener and closer format strings, since they depend on verbose mode
