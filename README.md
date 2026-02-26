@@ -153,15 +153,26 @@ expected. The test fails if the exit code of the command does not
 match the specified one, or if the response does not match the
 expected response.
 
+A timeout can be specified using the `--timeout` flag or per code
+block using the _shelldoctimeout_ option (in seconds). If a command
+exceeds its timeout, the test fails and the test run is aborted:
+
+    ```shell {shelldoctimeout=5 shelldocexitcode=3}
+    % (sleep 1; exit 3)
+    ```
+
+This command must complete within 5 seconds and exit with code 3:
+
+```shell {shelldoctimeout=5 shelldocexitcode=3}
+> (sleep 1; exit 3)
+```
+
 ## Output formats and integration into CI systems
 
 By default, ``shelldoc`` produces human-readable output. Additionally, ``shelldoc`` can create a results file in the _JunitXML_ format. This format is natively understood by many continuous integration (CI) systems, like for example [Jenkins](https://jenkins.io/). The output file is specified using the ``--xml`` argument.
 
 ## Limitations
 
-- **No command timeout**: Commands can run indefinitely. If a command
-  hangs, ``shelldoc`` will wait forever. Ensure your documented
-  commands complete in a reasonable time.
 - **Shared shell session**: All commands in a Markdown file run in the
   same shell session, allowing commands to depend on each other (e.g.,
   setting variables, changing directories). Be aware that earlier
