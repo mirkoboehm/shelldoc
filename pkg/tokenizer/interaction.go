@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mirkoboehm/shelldoc/pkg/shell"
 )
@@ -24,6 +25,8 @@ const (
 	ResultMatch
 	// ResultMismatch indicates that the output from the command did not match expectations in any way
 	ResultMismatch
+	// ResultTimeout indicates that the command exceeded its timeout
+	ResultTimeout
 )
 
 // Interaction represents one interaction with the shell
@@ -87,6 +90,8 @@ func (interaction *Interaction) Result() string {
 		return "FAIL (mismatch)"
 	case ResultError:
 		return "FAIL (execution failed)"
+	case ResultTimeout:
+		return "FAIL (timeout)"
 	default:
 		return "YOU FOUND A BUG!!11!1!"
 	}
@@ -94,7 +99,7 @@ func (interaction *Interaction) Result() string {
 
 // HasFailure returns true if the interaction failed (not on execution errors)
 func (interaction *Interaction) HasFailure() bool {
-	return interaction.ResultCode == ResultError || interaction.ResultCode == ResultMismatch
+	return interaction.ResultCode == ResultError || interaction.ResultCode == ResultMismatch || interaction.ResultCode == ResultTimeout
 }
 
 // New creates an empty interaction with a Caption
@@ -122,9 +127,11 @@ func (interaction *Interaction) evaluateResponse(response []string) bool {
 }
 
 // Execute the interaction and store the result
-func (interaction *Interaction) Execute(shell *shell.Shell) error {
+func (interaction *Interaction) Execute(sh *shell.Shell, globalTimeout time.Duration) error {
 	const ExitCodeOption = "shelldocexitcode"
 	const ExitCodeWhatever = "shelldocwhatever"
+	const TimeoutOption = "shelldoctimeout"
+
 	var expectedExitCode int
 	if expectedExitCodeOption, ok := interaction.Attributes[ExitCodeOption]; ok {
 		if value, err := strconv.Atoi(expectedExitCodeOption); err == nil {
@@ -137,11 +144,26 @@ func (interaction *Interaction) Execute(shell *shell.Shell) error {
 	if _, ok := interaction.Attributes[ExitCodeWhatever]; ok {
 		expectedWhatever = true
 	}
+
+	// Determine effective timeout: block-level overrides global
+	timeout := globalTimeout
+	if timeoutOption, ok := interaction.Attributes[TimeoutOption]; ok {
+		if seconds, err := strconv.Atoi(timeoutOption); err == nil {
+			timeout = time.Duration(seconds) * time.Second
+		} else {
+			return fmt.Errorf("argument to %s needs to be an integer (seconds), got \"%s\"", TimeoutOption, timeoutOption)
+		}
+	}
+
 	// execute the command in the shell
-	output, rc, err := shell.ExecuteCommand(interaction.Cmd)
+	output, rc, err := sh.ExecuteCommand(interaction.Cmd, timeout)
 	interaction.Output = output
 	// compare the results
-	if err != nil {
+	if err == shell.ErrTimeout {
+		interaction.ResultCode = ResultTimeout
+		interaction.Comment = fmt.Sprintf("command timed out after %v", timeout)
+		return shell.ErrTimeout
+	} else if err != nil {
 		interaction.ResultCode = ResultExecutionError
 		interaction.Comment = err.Error()
 		return fmt.Errorf("unable to execute command: %v", err)

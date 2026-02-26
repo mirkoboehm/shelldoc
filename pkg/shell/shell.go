@@ -6,6 +6,7 @@ package shell
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -14,7 +15,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
+
+// ErrTimeout is returned when a command exceeds its timeout
+var ErrTimeout = errors.New("command execution timed out")
 
 // Shell represents the shell process that runs in the background and executes the commands.
 type Shell struct {
@@ -57,8 +62,15 @@ func StartShell(shell string) (Shell, error) {
 	return Shell{cmd, stdin, stdout}, nil
 }
 
+// commandResult holds the result of a command execution
+type commandResult struct {
+	output []string
+	rc     int
+	err    error
+}
+
 // ExecuteCommand runs a command in the shell and returns its output and exit code
-func (shell *Shell) ExecuteCommand(command string) ([]string, int, error) {
+func (shell *Shell) ExecuteCommand(command string, timeout time.Duration) ([]string, int, error) {
 	const (
 		beginMarker = ">>>>>>>>>>SHELLDOC_MARKER>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		endMarker   = "<<<<<<<<<<SHELLDOC_MARKER"
@@ -67,41 +79,64 @@ func (shell *Shell) ExecuteCommand(command string) ([]string, int, error) {
 	io.WriteString(shell.stdin, fmt.Sprintf("echo \"%s\"\n", beginMarker))
 	io.WriteString(shell.stdin, fmt.Sprintf("%s; echo \"%s $?\"\n", instruction, endMarker))
 
-	// read output (TODO: with timeout), watch for markers:
 	beginEx := fmt.Sprintf("^%s$", beginMarker)
 	beginRx := regexp.MustCompile(beginEx)
 	endEx := fmt.Sprintf("^%s (.+)$", endMarker)
 	endRx := regexp.MustCompile(endEx)
 
-	var output []string
-	var rc int
-	beginFound := false
-	scanner := bufio.NewScanner(shell.stdout)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if beginRx.MatchString(line) {
-			beginFound = true
-			continue
-		}
-		if !beginFound {
-			continue
-		}
-		match := endRx.FindStringSubmatch(line)
-		if len(match) > 1 {
-			value, err := strconv.Atoi(match[1])
-			if err != nil {
-				return nil, -1, fmt.Errorf("unable to read exit code for shell command: %v", err)
+	// Run the scanner in a goroutine to support timeout
+	resultCh := make(chan commandResult, 1)
+	go func() {
+		var output []string
+		var rc int
+		beginFound := false
+		scanner := bufio.NewScanner(shell.stdout)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if beginRx.MatchString(line) {
+				beginFound = true
+				continue
 			}
-			rc = value
-			break
+			if !beginFound {
+				continue
+			}
+			match := endRx.FindStringSubmatch(line)
+			if len(match) > 1 {
+				value, err := strconv.Atoi(match[1])
+				if err != nil {
+					resultCh <- commandResult{nil, -1, fmt.Errorf("unable to read exit code for shell command: %v", err)}
+					return
+				}
+				rc = value
+				break
+			}
+			output = append(output, line)
 		}
-		output = append(output, line)
+		resultCh <- commandResult{output, rc, nil}
+	}()
+
+	// Wait for result or timeout
+	if timeout > 0 {
+		select {
+		case result := <-resultCh:
+			return result.output, result.rc, result.err
+		case <-time.After(timeout):
+			return nil, -1, ErrTimeout
+		}
 	}
-	return output, rc, nil
+
+	// No timeout specified, wait indefinitely
+	result := <-resultCh
+	return result.output, result.rc, result.err
 }
 
 // Exit tells a running shell to exit and waits for it
 func (shell *Shell) Exit() error {
 	io.WriteString(shell.stdin, "exit\n")
 	return shell.cmd.Wait()
+}
+
+// Kill forcefully terminates the shell process
+func (shell *Shell) Kill() error {
+	return shell.cmd.Process.Kill()
 }
