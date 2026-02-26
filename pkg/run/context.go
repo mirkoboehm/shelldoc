@@ -3,6 +3,7 @@ package run
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/mirkoboehm/shelldoc/pkg/junitxml"
 )
@@ -16,6 +17,7 @@ type Context struct {
 	XMLOutputFile string
 	ReplaceDots   bool
 	DryRun        bool
+	Timeout       time.Duration
 	Files         []string
 	// output variables
 	Suites     junitxml.JUnitTestSuites

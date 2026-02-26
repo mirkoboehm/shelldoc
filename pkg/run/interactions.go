@@ -63,11 +63,12 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 		return nil, err
 	}
 	// start a background shell, it will run until the function ends
-	shell, err := shell.StartShell(shellpath)
+	currentShell, err := shell.StartShell(shellpath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to start shell: %v", err)
 	}
-	defer shell.Exit()
+	defer currentShell.Exit()
+
 	// execute the interactions and verify the results:
 	fmt.Printf("SHELLDOC: doc-testing \"%s\" ...\n", inputfile)
 	// construct the opener and closer format strings, since they depend on verbose mode
@@ -87,7 +88,7 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 		if context.Verbose {
 			fmt.Printf(" --> %s\n", interaction.Cmd)
 		}
-		testcase, err := context.performTestCase(interaction, shell)
+		testcase, err := context.performTestCase(interaction, &currentShell)
 		testcase.Classname = inputfile // testcase is always returned, even if err is not nil
 		if context.ReplaceDots {
 			testcase.Classname = strings.ReplaceAll(inputfile, ".", "●")
@@ -105,6 +106,11 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 		if err := suite.RegisterTestCase(*testcase); err != nil {
 			return nil, fmt.Errorf("failed to register test case: %w", err)
 		}
+		// Abort on timeout - shell state is undefined after a timeout
+		if err == shell.ErrTimeout {
+			log.Printf("Aborting test run due to timeout.")
+			break
+		}
 		if interaction.HasFailure() && context.FailureStops {
 			log.Printf("Stop requested after first failed test.")
 			break
@@ -115,10 +121,10 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 	return suite, nil
 }
 
-func (context *Context) performTestCase(interaction *tokenizer.Interaction, shell shell.Shell) (*junitxml.JUnitTestCase, error) {
+func (context *Context) performTestCase(interaction *tokenizer.Interaction, sh *shell.Shell) (*junitxml.JUnitTestCase, error) {
 	testcase := &junitxml.JUnitTestCase{
 		Name: interaction.Cmd,
 	}
 	defer junitxml.RegisterElapsedTime(time.Now(), &testcase.Time)
-	return testcase, interaction.Execute(&shell)
+	return testcase, interaction.Execute(sh, context.Timeout)
 }
