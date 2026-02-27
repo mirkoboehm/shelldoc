@@ -6,6 +6,7 @@ package shell
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +21,9 @@ import (
 
 // ErrTimeout is returned when a command exceeds its timeout
 var ErrTimeout = errors.New("command execution timed out")
+
+// ErrCancelled is returned when the context is cancelled (e.g., CTRL-C)
+var ErrCancelled = errors.New("command execution cancelled")
 
 // Shell represents the shell process that runs in the background and executes the commands.
 type Shell struct {
@@ -69,8 +73,10 @@ type commandResult struct {
 	err    error
 }
 
-// ExecuteCommand runs a command in the shell and returns its output and exit code
-func (shell *Shell) ExecuteCommand(command string, timeout time.Duration) ([]string, int, error) {
+// ExecuteCommand runs a command in the shell and returns its output and exit code.
+// The context can be used to cancel execution (e.g., on SIGINT).
+// The timeout parameter specifies a per-command timeout (0 means no timeout).
+func (shell *Shell) ExecuteCommand(ctx context.Context, command string, timeout time.Duration) ([]string, int, error) {
 	const (
 		beginMarker = ">>>>>>>>>>SHELLDOC_MARKER>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		endMarker   = "<<<<<<<<<<SHELLDOC_MARKER"
@@ -84,7 +90,7 @@ func (shell *Shell) ExecuteCommand(command string, timeout time.Duration) ([]str
 	endEx := fmt.Sprintf("^%s (.+)$", endMarker)
 	endRx := regexp.MustCompile(endEx)
 
-	// Run the scanner in a goroutine to support timeout
+	// Run the scanner in a goroutine to support timeout and cancellation
 	resultCh := make(chan commandResult, 1)
 	go func() {
 		var output []string
@@ -115,19 +121,25 @@ func (shell *Shell) ExecuteCommand(command string, timeout time.Duration) ([]str
 		resultCh <- commandResult{output, rc, nil}
 	}()
 
-	// Wait for result or timeout
+	// Wait for result, timeout, or context cancellation
 	if timeout > 0 {
 		select {
 		case result := <-resultCh:
 			return result.output, result.rc, result.err
 		case <-time.After(timeout):
 			return nil, -1, ErrTimeout
+		case <-ctx.Done():
+			return nil, -1, ErrCancelled
 		}
 	}
 
-	// No timeout specified, wait indefinitely
-	result := <-resultCh
-	return result.output, result.rc, result.err
+	// No timeout specified, wait for result or context cancellation
+	select {
+	case result := <-resultCh:
+		return result.output, result.rc, result.err
+	case <-ctx.Done():
+		return nil, -1, ErrCancelled
+	}
 }
 
 // Exit tells a running shell to exit and waits for it

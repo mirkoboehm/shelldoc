@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
@@ -30,7 +31,7 @@ func result(code int) string {
 	}
 }
 
-func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTestSuite, error) {
+func (runCtx *Context) performInteractions(ctx context.Context, inputfile string) (*junitxml.JUnitTestSuite, error) {
 	// the test suite object for this file
 	suite := &junitxml.JUnitTestSuite{Name: inputfile}
 	suite.AddProperty("shelldoc-version", version.Version())
@@ -45,7 +46,7 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 	tokenizer.Tokenize(data, visitor)
 
 	// dry-run mode: just list the commands without executing them
-	if context.DryRun {
+	if runCtx.DryRun {
 		fmt.Printf("SHELLDOC: dry-run \"%s\" ...\n", inputfile)
 		magnitude := int(math.Log10(float64(len(visitor.Interactions)))) + 1
 		counterFormat := fmt.Sprintf("%%%ds", magnitude+2)
@@ -58,7 +59,7 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 	}
 
 	// detect shell
-	shellpath, err := shell.DetectShell(context.ShellName)
+	shellpath, err := shell.DetectShell(runCtx.ShellName)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +76,7 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 	magnitude := int(math.Log10(float64(len(visitor.Interactions)))) + 1
 	openerLineEnding := "  : "
 	resultString := " "
-	if context.Verbose {
+	if runCtx.Verbose {
 		openerLineEnding = "\n"
 		resultString = " <-- "
 	}
@@ -84,47 +85,63 @@ func (context *Context) performInteractions(inputfile string) (*junitxml.JUnitTe
 	closer := fmt.Sprintf("%s%%s\n", resultString)
 
 	for index, interaction := range visitor.Interactions {
+		// Check for cancellation before each interaction
+		select {
+		case <-ctx.Done():
+			log.Printf("Test run cancelled.")
+			fmt.Printf("%s: %d tests - %d successful, %d failures, %d errors (cancelled)\n",
+				result(runCtx.ReturnCode()), suite.TestCount(),
+				suite.SuccessCount(), suite.FailureCount(), suite.ErrorCount())
+			return suite, nil
+		default:
+		}
+
 		fmt.Printf(opener, fmt.Sprintf("(%d)", index+1), interaction.Describe())
-		if context.Verbose {
+		if runCtx.Verbose {
 			fmt.Printf(" --> %s\n", interaction.Cmd)
 		}
-		testcase, err := context.performTestCase(interaction, &currentShell)
+		testcase, err := runCtx.performTestCase(ctx, interaction, &currentShell)
 		testcase.Classname = inputfile // testcase is always returned, even if err is not nil
-		if context.ReplaceDots {
+		if runCtx.ReplaceDots {
 			testcase.Classname = strings.ReplaceAll(inputfile, ".", "●")
 		}
 		if err != nil {
 			fmt.Printf(" --  ERROR: %v", err)
-			context.RegisterReturnCode(returnError)
+			runCtx.RegisterReturnCode(returnError)
 			testcase.RegisterError(result(returnError), interaction.Result(), err.Error())
 		}
 		fmt.Printf(closer, interaction.Result())
 		if interaction.HasFailure() {
-			context.RegisterReturnCode(returnFailure)
+			runCtx.RegisterReturnCode(returnFailure)
 			testcase.RegisterFailure(result(returnFailure), interaction.Result(), interaction.DescribeFull())
 		}
 		if err := suite.RegisterTestCase(*testcase); err != nil {
 			return nil, fmt.Errorf("failed to register test case: %w", err)
+		}
+		// Abort on cancellation - user requested stop
+		if err == shell.ErrCancelled {
+			log.Printf("Aborting test run due to cancellation.")
+			break
 		}
 		// Abort on timeout - shell state is undefined after a timeout
 		if err == shell.ErrTimeout {
 			log.Printf("Aborting test run due to timeout.")
 			break
 		}
-		if interaction.HasFailure() && context.FailureStops {
+		if interaction.HasFailure() && runCtx.FailureStops {
 			log.Printf("Stop requested after first failed test.")
 			break
 		}
 	}
-	fmt.Printf("%s: %d tests - %d successful, %d failures, %d errors\n", result(context.ReturnCode()), suite.TestCount(),
+	fmt.Printf("%s: %d tests - %d successful, %d failures, %d errors\n", result(runCtx.ReturnCode()), suite.TestCount(),
 		suite.SuccessCount(), suite.FailureCount(), suite.ErrorCount())
 	return suite, nil
 }
 
-func (context *Context) performTestCase(interaction *tokenizer.Interaction, sh *shell.Shell) (*junitxml.JUnitTestCase, error) {
+func (runCtx *Context) performTestCase(ctx context.Context, interaction *tokenizer.Interaction, sh *shell.Shell) (*junitxml.JUnitTestCase, error) {
 	testcase := &junitxml.JUnitTestCase{
 		Name: interaction.Cmd,
 	}
 	defer junitxml.RegisterElapsedTime(time.Now(), &testcase.Time)
-	return testcase, interaction.Execute(sh, context.Timeout)
+	return testcase, interaction.Execute(ctx, sh, runCtx.Timeout)
 }

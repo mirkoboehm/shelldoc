@@ -5,6 +5,7 @@ package tokenizer
 // SPDX-License-Identifier: LGPL-3.0
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -27,6 +28,8 @@ const (
 	ResultMismatch
 	// ResultTimeout indicates that the command exceeded its timeout
 	ResultTimeout
+	// ResultCancelled indicates that the command was cancelled (e.g., CTRL-C)
+	ResultCancelled
 )
 
 // Interaction represents one interaction with the shell
@@ -92,6 +95,8 @@ func (interaction *Interaction) Result() string {
 		return "FAIL (execution failed)"
 	case ResultTimeout:
 		return "FAIL (timeout)"
+	case ResultCancelled:
+		return "CANCELLED (interrupted)"
 	default:
 		return "YOU FOUND A BUG!!11!1!"
 	}
@@ -126,8 +131,9 @@ func (interaction *Interaction) evaluateResponse(response []string) bool {
 	return reflect.DeepEqual(output, expected)
 }
 
-// Execute the interaction and store the result
-func (interaction *Interaction) Execute(sh *shell.Shell, globalTimeout time.Duration) error {
+// Execute the interaction and store the result.
+// The context can be used to cancel execution (e.g., on SIGINT).
+func (interaction *Interaction) Execute(ctx context.Context, sh *shell.Shell, globalTimeout time.Duration) error {
 	const ExitCodeOption = "shelldocexitcode"
 	const ExitCodeWhatever = "shelldocwhatever"
 	const TimeoutOption = "shelldoctimeout"
@@ -156,10 +162,14 @@ func (interaction *Interaction) Execute(sh *shell.Shell, globalTimeout time.Dura
 	}
 
 	// execute the command in the shell
-	output, rc, err := sh.ExecuteCommand(interaction.Cmd, timeout)
+	output, rc, err := sh.ExecuteCommand(ctx, interaction.Cmd, timeout)
 	interaction.Output = output
 	// compare the results
-	if err == shell.ErrTimeout {
+	if err == shell.ErrCancelled {
+		interaction.ResultCode = ResultCancelled
+		interaction.Comment = "execution cancelled"
+		return shell.ErrCancelled
+	} else if err == shell.ErrTimeout {
 		interaction.ResultCode = ResultTimeout
 		interaction.Comment = fmt.Sprintf("command timed out after %v", timeout)
 		return shell.ErrTimeout
