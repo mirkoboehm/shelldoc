@@ -5,13 +5,16 @@
 package cmd
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/mirkoboehm/shelldoc/pkg/run"
 	"github.com/spf13/cobra"
 )
 
-var context run.Context
+var runContext run.Context
 
 // runCmd represents the run command
 var runCmd = &cobra.Command{
@@ -23,16 +26,28 @@ executes them and compares their output with the content of the code block.`,
 }
 
 func init() {
-	runCmd.Flags().StringVarP(&context.ShellName, "shell", "s", "", "The shell to invoke (default: $SHELL)")
-	runCmd.Flags().BoolVarP(&context.FailureStops, "fail", "f", false, "Stop on the first failure")
-	runCmd.Flags().StringVarP(&context.XMLOutputFile, "xml", "x", "", "Write results to the specified output file in JUnitXML format")
-	runCmd.Flags().BoolVarP(&context.ReplaceDots, "replace-dots-in-xml-classname", "d", true, "When using filenames as classnames, replace dots with a unicode circle")
-	runCmd.Flags().BoolVarP(&context.DryRun, "dry-run", "n", false, "Preview commands without executing them")
-	runCmd.Flags().DurationVarP(&context.Timeout, "timeout", "t", 0, "Timeout for each command (e.g., 30s, 1m)")
+	runCmd.Flags().StringVarP(&runContext.ShellName, "shell", "s", "", "The shell to invoke (default: $SHELL)")
+	runCmd.Flags().BoolVarP(&runContext.FailureStops, "fail", "f", false, "Stop on the first failure")
+	runCmd.Flags().StringVarP(&runContext.XMLOutputFile, "xml", "x", "", "Write results to the specified output file in JUnitXML format")
+	runCmd.Flags().BoolVarP(&runContext.ReplaceDots, "replace-dots-in-xml-classname", "d", true, "When using filenames as classnames, replace dots with a unicode circle")
+	runCmd.Flags().BoolVarP(&runContext.DryRun, "dry-run", "n", false, "Preview commands without executing them")
+	runCmd.Flags().DurationVarP(&runContext.Timeout, "timeout", "t", 0, "Timeout for each command (e.g., 30s, 1m)")
 	rootCmd.AddCommand(runCmd)
 }
 
 func executeRun(cmd *cobra.Command, args []string) {
-	context.Files = args
-	os.Exit(context.ExecuteFiles())
+	// Set up context with signal handling for graceful shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Handle SIGINT (Ctrl+C) and SIGTERM for graceful shutdown
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigCh
+		cancel()
+	}()
+
+	runContext.Files = args
+	os.Exit(runContext.ExecuteFiles(ctx))
 }

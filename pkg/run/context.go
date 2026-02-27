@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -50,20 +51,32 @@ func (context *Context) WriteXML() error {
 	return nil
 }
 
-// ExecuteFiles runs each file through performInteractions and aggregates the results
-func (context *Context) ExecuteFiles() int {
-	context.RegisterReturnCode(returnSuccess)
-	for _, file := range context.Files {
-		suite, err := context.performInteractions(file)
+// ExecuteFiles runs each file through performInteractions and aggregates the results.
+// The ctx parameter enables graceful cancellation (e.g., on SIGINT).
+func (runCtx *Context) ExecuteFiles(ctx context.Context) int {
+	runCtx.RegisterReturnCode(returnSuccess)
+	for _, file := range runCtx.Files {
+		// Check for cancellation before starting each file
+		select {
+		case <-ctx.Done():
+			fmt.Println("\nInterrupted. Shutting down gracefully...")
+			if err := runCtx.WriteXML(); err != nil {
+				fmt.Printf("%v\n", err)
+			}
+			return returnError
+		default:
+		}
+
+		suite, err := runCtx.performInteractions(ctx, file)
 		if err != nil {
 			fmt.Println(err) // log may be disabled (see "verbose")
 			os.Exit(returnError)
 		}
-		context.Suites.Suites = append(context.Suites.Suites, *suite)
+		runCtx.Suites.Suites = append(runCtx.Suites.Suites, *suite)
 	}
-	if err := context.WriteXML(); err != nil {
+	if err := runCtx.WriteXML(); err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(returnError)
 	}
-	return context.ReturnCode()
+	return runCtx.ReturnCode()
 }
