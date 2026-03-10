@@ -61,10 +61,9 @@ cause an infinite recursion when evaluating the README.md using
 prompt next to  _$_ or a _>_. It can be used in documentation as a
 prompt indicator without triggering a ``shelldoc`` test.
 
-The XML output file allows for test results can be integrated into CI
-workflows. Review the "Selftest Results" section for any of the
-workflow runs of the pull request action in this repository for an
-example:
+The XML output allows test results to be integrated into CI workflows.
+Review the "Selftest Results" section for any of the workflow runs of
+the pull request action in this repository for an example:
 
 ![A sample visualization of the shelldoc selftest results for this
 README page](assets/shelldoc-testresults-visualization.png "selftest
