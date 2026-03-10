@@ -9,6 +9,21 @@ to run it. To make sure the documentation is accurate and up-to-date,
 it should be automatically tested. ``shelldoc`` tests Unix shell
 commands in Markdown files and reports the results.
 
+## Why shelldoc?
+
+- **Language-agnostic**: While ``shelldoc`` is written in Go, it works
+  with any Markdown documentation. It tests shell commands, not
+  language-specific code, making it useful for projects in any
+  language.
+- **Zero dependencies**: Install with `go install` and get a single,
+  self-contained binary. No runtime dependencies required.
+- **CI-friendly**: Install the ``shelldoc`` binary at container build
+  time. No Go toolchain needed when running your tests. The
+  binary is statically linked and comes with no additional dependencies.
+- **License-safe**: ``shelldoc`` only tests your documentation; it
+  doesn't become part of your project. Its license never proliferates
+  to your code.
+
 ## Basic usage
 
 ``shelldoc`` parses a Markdown input file, detects the code blocks in
