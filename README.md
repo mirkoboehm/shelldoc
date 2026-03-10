@@ -2,12 +2,9 @@
 
 [![CI](https://github.com/mirkoboehm/shelldoc/actions/workflows/ci.yml/badge.svg)](https://github.com/mirkoboehm/shelldoc/actions/workflows/ci.yml)
 
-Markdown is widely used for documentation and README.md files that
-explain how to use or build some software. Such documentation often
-contains shell commands that explain how to build the software or how
-to run it. To make sure the documentation is accurate and up-to-date,
-it should be automatically tested. ``shelldoc`` tests Unix shell
-commands in Markdown files and reports the results.
+Documentation lies. Not intentionally, however code evolves and docs get
+stale. ``shelldoc`` keeps your Markdown honest by executing the shell
+commands in your documentation and verifying they still work.
 
 ## Why shelldoc?
 
@@ -36,10 +33,9 @@ expected response:
     Hello
 
 Lines in code blocks that begin with a ``$`` or a ``>`` _trigger character_
-are considered commands. Lines inbetween without those trigger characters
-are considered the expected response. ``shelldoc`` will execute these
-commands and return whether or not the commands succeeded and the
-output matches the specificaton:
+are considered commands. Lines in between are the expected response.
+``shelldoc`` executes these commands and checks whether they succeed
+and produce the expected output:
 
 ~~~shell
 % shelldoc run README.md
@@ -96,7 +92,7 @@ as used in the description on how to install ``shelldoc`` above,
 indicates that all output is accepted from this point forward as long
 as the command exits with the expected return code (zero, by default).
 
-The `-v (--verbose)` flags enables additional diagnostic output.
+The `-v (--verbose)` flag enables additional diagnostic output.
 
 A shell is launched that will execute all shell commands in a single
 Markdown file. By default, the user's configured shell is used. A
@@ -114,11 +110,9 @@ interactions:
 	$ echo $GREETING
 	Hello World
 
-``shelldoc`` uses
-the
-[Blackfriday Markdown processor](https://github.com/russross/blackfriday) to
-parse Markdown files, and the [Cobra](https://github.com/spf13/cobra)
-package to parse the command line arguments.
+``shelldoc`` uses the [Blackfriday Markdown processor](https://github.com/russross/blackfriday)
+to parse Markdown files, and [Cobra](https://github.com/spf13/cobra) for
+command line argument parsing.
 
 ## Options
 
@@ -148,7 +142,7 @@ Try executing this test:
 Hello
 ```
 
-The _shelldocwhatever_ options tells `shelldoc` that the exit code of
+The _shelldocwhatever_ option tells ``shelldoc`` that the exit code of
 the following command does not matter. If any expected response is
 specified, it will still be evaluated. The test succeeds if the expected
 response is produced, no matter the exit code of the command. 
@@ -158,7 +152,7 @@ An expected exit code is specified using the _shelldocexitcode_ option:
     ```shell {shelldocexitcode=2}
     % (exit 2)
     ```
-
+<>
 This means the test is considered successful if it produces no response and returns 2.
 
 ```shell {shelldocexitcode=2}
@@ -186,7 +180,9 @@ This command must complete within 5 seconds and exit with code 3:
 
 ## Output formats and integration into CI systems
 
-By default, ``shelldoc`` produces human-readable output. Additionally, ``shelldoc`` can create a results file in the _JunitXML_ format. This format is natively understood by many continuous integration (CI) systems, like for example [Jenkins](https://jenkins.io/). The output file is specified using the ``--xml`` argument.
+By default, ``shelldoc`` produces human-readable output. For CI
+integration, use the ``--xml`` flag to generate results in _JUnit XML_
+format, which most CI systems understand natively.
 
 ## Limitations
 
@@ -216,24 +212,16 @@ security implications:
 
 ## Contributing
 
-*shelldoc*
-is
-[free and open source software](https://en.wikipedia.org/wiki/Free_and_open-source_software). Everybody
-is invited to use, study, modify and redistribute it. To contribute to
-``shelldoc``, feel free to fork it and submit pull requests, or to
-submit issues in
-the
-[``shelldoc`` issue tracker](https://github.com/mirkoboehm/shelldoc/issues). All
-contributions are welcome.
+``shelldoc`` is [free and open source software](https://en.wikipedia.org/wiki/Free_and_open-source_software).
+Contributions are welcome. You are encouraged to install and use it, fork it for development, submit pull requests, or open issues
+in the [issue tracker](https://github.com/mirkoboehm/shelldoc/issues).
 
-To report a bug, the best way is to submit a Markdown file and a
-description of how the Markdown file should be interpreted, and how
-``shelldoc`` interprets it.
+To report a bug, submit a Markdown file showing what ``shelldoc`` does
+versus what you expected. Bonus points if it's minimal and reproducible.
 
 ## Authors and license
 
-``shelldoc`` was developed
-by [Mirko Boehm](http://www.creative-destruction.org).
+``shelldoc`` was developed by [Mirko Boehm](https://creative-destruction.org).
 
 The command line programs of ``shelldoc`` are located in the `cmd/`
 subdirectory and licensed under the terms of the GPL, version 3. The
