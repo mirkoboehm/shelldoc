@@ -43,12 +43,15 @@ output matches the specificaton:
 
 ~~~shell
 % shelldoc run README.md
-SHELLDOC: doc-testing "go/src/github.com/mirkoboehm/shelldoc/README.md" ...
+SHELLDOC: doc-testing "README.md" ...
  CMD (1): echo Hello                                ?  Hello                      :  PASS (match)
  CMD (2): go install github.com/mirkoboehm/shel...  ?  ...                        :  PASS (match)
  CMD (3): export GREETING="Hello World"             ?  (no response expected)     :  PASS (execution successful)
  CMD (4): echo $GREETING                            ?  Hello World                :  PASS (match)
-SUCCESS: 4 tests (4 successful, 0 failures, 0 execution errors)
+ CMD (5): echo Hello && false                       ?  Hello                      :  PASS (match)
+ CMD (6): (exit 2)                                  ?  (no response expected)     :  PASS (execution successful)
+ CMD (7): (sleep 1; exit 3)                         ?  (no response expected)     :  PASS (execution successful)
+SUCCESS: 7 tests - 7 successful, 0 failures, 0 errors
 ~~~
 
 Note that this example is not executed as a test by ``shelldoc``, since
