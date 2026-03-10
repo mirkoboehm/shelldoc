@@ -152,7 +152,7 @@ An expected exit code is specified using the _shelldocexitcode_ option:
     ```shell {shelldocexitcode=2}
     % (exit 2)
     ```
-<>
+
 This means the test is considered successful if it produces no response and returns 2.
 
 ```shell {shelldocexitcode=2}
