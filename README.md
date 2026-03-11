@@ -8,6 +8,9 @@ commands in your documentation and verifying they still work.
 
 ## Why shelldoc?
 
+<img src="assets/shelldoc-logo.png" alt="shelldoc terminal output" width="10%" align="right">
+
+
 - **Language-agnostic**: While ``shelldoc`` is written in Go, it works
   with any Markdown documentation. It tests shell commands, not
   language-specific code, making it useful for projects in any
