@@ -7,3 +7,5 @@ debug.test
 /VERSION
 cmd/shelldoc/shelldoc
 results.xml
+# Filesystem artifacts
+.DS_Store
