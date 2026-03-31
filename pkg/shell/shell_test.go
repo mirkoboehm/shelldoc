@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 }
 func TestShellLifeCycle(t *testing.T) {
 	// The most basic test, start a shell and exit it again
-	shell, err := StartShell(shellpath, false)
+	shell, err := StartShell(shellpath, false, false)
 	require.NoError(t, err, "Starting a shell should work")
 	require.NoError(t, shell.Exit(), "Exiting ad running shell should work")
 }
@@ -30,7 +30,7 @@ func TestShellLifeCycle(t *testing.T) {
 func TestShellLifeCycleRepeated(t *testing.T) {
 	// Can the program start and stop a shell repeatedly?
 	for counter := 0; counter < 16; counter++ {
-		shell, err := StartShell(shellpath, false)
+		shell, err := StartShell(shellpath, false, false)
 		require.NoError(t, err, "Starting a shell should work")
 		require.NoError(t, shell.Exit(), "Exiting ad running shell should work")
 	}
@@ -38,7 +38,7 @@ func TestShellLifeCycleRepeated(t *testing.T) {
 
 func TestReturnCodes(t *testing.T) {
 	// Does the shell report return codes corrrectly?
-	shell, err := StartShell(shellpath, false)
+	shell, err := StartShell(shellpath, false, false)
 	require.NoError(t, err, "Starting a shell should work")
 	defer shell.Exit()
 	ctx := context.Background()
@@ -58,7 +58,7 @@ func TestReturnCodes(t *testing.T) {
 
 func TestCaptureOutput(t *testing.T) {
 	// Does the shell capture and return the lines printed by the command correctly?
-	shell, err := StartShell(shellpath, false)
+	shell, err := StartShell(shellpath, false, false)
 	require.NoError(t, err, "Starting a shell should work")
 	defer shell.Exit()
 	ctx := context.Background()
@@ -78,7 +78,7 @@ func TestCaptureOutput(t *testing.T) {
 
 func TestTimeout(t *testing.T) {
 	// Does the timeout work correctly?
-	shell, err := StartShell(shellpath, false)
+	shell, err := StartShell(shellpath, false, false)
 	require.NoError(t, err, "Starting a shell should work")
 	defer shell.Kill() // Use Kill since shell may be in inconsistent state after timeout
 	ctx := context.Background()
@@ -92,7 +92,7 @@ func TestTimeout(t *testing.T) {
 
 func TestTimeoutExpires(t *testing.T) {
 	// Does timeout trigger correctly for slow commands?
-	shell, err := StartShell(shellpath, false)
+	shell, err := StartShell(shellpath, false, false)
 	require.NoError(t, err, "Starting a shell should work")
 	defer shell.Kill()
 	ctx := context.Background()
@@ -108,7 +108,7 @@ func TestTimeoutExpires(t *testing.T) {
 
 func TestCaptureStderr(t *testing.T) {
 	// Does the shell capture stderr separately from stdout?
-	shell, err := StartShell(shellpath, false)
+	shell, err := StartShell(shellpath, false, false)
 	require.NoError(t, err, "Starting a shell should work")
 	defer shell.Exit()
 	ctx := context.Background()
@@ -122,7 +122,7 @@ func TestCaptureStderr(t *testing.T) {
 
 func TestMergeStderr(t *testing.T) {
 	// Does --merge-stderr combine stderr into stdout?
-	shell, err := StartShell(shellpath, true)
+	shell, err := StartShell(shellpath, true, false)
 	require.NoError(t, err, "Starting a shell should work")
 	defer shell.Exit()
 	ctx := context.Background()
@@ -137,7 +137,7 @@ func TestMergeStderr(t *testing.T) {
 
 func TestStderrDoesNotPollutestdout(t *testing.T) {
 	// Stderr output must not bleed into stdout when captured separately.
-	shell, err := StartShell(shellpath, false)
+	shell, err := StartShell(shellpath, false, false)
 	require.NoError(t, err, "Starting a shell should work")
 	defer shell.Exit()
 	ctx := context.Background()
@@ -150,7 +150,7 @@ func TestStderrDoesNotPollutestdout(t *testing.T) {
 
 func TestContextCancellation(t *testing.T) {
 	// Does context cancellation work correctly?
-	shell, err := StartShell(shellpath, false)
+	shell, err := StartShell(shellpath, false, false)
 	require.NoError(t, err, "Starting a shell should work")
 	defer shell.Kill()
 
