@@ -50,11 +50,28 @@ func DetectShell(selected string) (string, error) {
 	return selected, nil
 }
 
+// cleanEnv returns the current environment with TERM=dumb and NO_COLOR=1
+// forced, so that child processes do not emit ANSI escape sequences into
+// shelldoc's stdout pipe regardless of the user's interactive terminal settings.
+func cleanEnv() []string {
+	env := os.Environ()
+	result := make([]string, 0, len(env))
+	for _, e := range env {
+		if strings.HasPrefix(e, "TERM=") || strings.HasPrefix(e, "NO_COLOR=") {
+			continue
+		}
+		result = append(result, e)
+	}
+	result = append(result, "TERM=dumb", "NO_COLOR=1")
+	return result
+}
+
 // StartShell starts a shell as a background process.
 // When mergeStderr is true, stderr from each command is redirected into stdout (2>&1).
 // When false, stderr is captured separately via a temp file and returned alongside stdout.
 func StartShell(shell string, mergeStderr bool) (Shell, error) {
 	cmd := exec.Command(shell)
+	cmd.Env = cleanEnv()
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return Shell{}, fmt.Errorf("Unable to set up input stream for shell %s: %v", shell, err)
