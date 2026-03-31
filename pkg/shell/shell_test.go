@@ -106,6 +106,48 @@ func TestTimeoutExpires(t *testing.T) {
 	require.Less(t, elapsed, 1*time.Second, "Timeout should trigger quickly, not wait for command")
 }
 
+func TestCaptureStderr(t *testing.T) {
+	// Does the shell capture stderr separately from stdout?
+	shell, err := StartShell(shellpath, false)
+	require.NoError(t, err, "Starting a shell should work")
+	defer shell.Exit()
+	ctx := context.Background()
+
+	stdout, stderr, rc, err := shell.ExecuteCommand(ctx, "echo out && echo err >&2", 0)
+	require.NoError(t, err)
+	require.Equal(t, 0, rc)
+	require.Equal(t, []string{"out"}, stdout, "stdout should contain only the stdout line")
+	require.Equal(t, []string{"err"}, stderr, "stderr should contain only the stderr line")
+}
+
+func TestMergeStderr(t *testing.T) {
+	// Does --merge-stderr combine stderr into stdout?
+	shell, err := StartShell(shellpath, true)
+	require.NoError(t, err, "Starting a shell should work")
+	defer shell.Exit()
+	ctx := context.Background()
+
+	stdout, stderr, rc, err := shell.ExecuteCommand(ctx, "echo out && echo err >&2", 0)
+	require.NoError(t, err)
+	require.Equal(t, 0, rc)
+	require.Contains(t, stdout, "out", "stdout should contain the stdout line")
+	require.Contains(t, stdout, "err", "merged stderr should appear in stdout")
+	require.Empty(t, stderr, "stderr slice should be empty when merging")
+}
+
+func TestStderrDoesNotPollutestdout(t *testing.T) {
+	// Stderr output must not bleed into stdout when captured separately.
+	shell, err := StartShell(shellpath, false)
+	require.NoError(t, err, "Starting a shell should work")
+	defer shell.Exit()
+	ctx := context.Background()
+
+	stdout, _, rc, err := shell.ExecuteCommand(ctx, "echo only-stdout && echo only-stderr >&2", 0)
+	require.NoError(t, err)
+	require.Equal(t, 0, rc)
+	require.Equal(t, []string{"only-stdout"}, stdout, "stderr must not appear in stdout")
+}
+
 func TestContextCancellation(t *testing.T) {
 	// Does context cancellation work correctly?
 	shell, err := StartShell(shellpath, false)
