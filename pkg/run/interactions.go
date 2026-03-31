@@ -106,6 +106,9 @@ func (runCtx *Context) performInteractions(ctx context.Context, inputfile string
 		}
 		testcase, err := runCtx.performTestCase(ctx, interaction, &currentShell)
 		testcase.Classname = inputfile // testcase is always returned, even if err is not nil
+		if len(runCtx.XMLOutputFile) > 0 {
+			testcase.SystemOut = strings.Join(interaction.Output, "\n")
+		}
 		if runCtx.ReplaceDots {
 			testcase.Classname = strings.ReplaceAll(inputfile, ".", "●")
 		}
