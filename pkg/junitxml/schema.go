@@ -40,6 +40,7 @@ type JUnitTestCase struct {
 	Failure     *JUnitFailure     `xml:"failure,omitempty"`
 	Error       *JUnitError       `xml:"error,omitempty"`
 	SystemOut   string            `xml:"system-out,omitempty"`
+	SystemErr   string            `xml:"system-err,omitempty"`
 }
 
 // JUnitSkipMessage contains the reason why a testcase was skipped.

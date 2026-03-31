@@ -20,6 +20,7 @@ type Context struct {
 	Verbose       bool
 	FailureStops  bool
 	XMLOutputFile string
+	MergeStderr   bool
 	ReplaceDots   bool
 	DryRun        bool
 	Timeout       time.Duration

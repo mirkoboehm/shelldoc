@@ -48,8 +48,10 @@ type Interaction struct {
 	ResultCode int
 	// Comment contains an explanation of the ResultCode after execution
 	Comment string
-	// Output contains the output of the interaction after it has been executed as individual lines
+	// Output contains the stdout of the interaction after it has been executed as individual lines
 	Output []string
+	// ErrorOutput contains the stderr of the interaction after it has been executed as individual lines
+	ErrorOutput []string
 }
 
 // Describe returns a human-readable description of the interaction
@@ -162,8 +164,9 @@ func (interaction *Interaction) Execute(ctx context.Context, sh *shell.Shell, gl
 	}
 
 	// execute the command in the shell
-	output, rc, err := sh.ExecuteCommand(ctx, interaction.Cmd, timeout)
+	output, errOutput, rc, err := sh.ExecuteCommand(ctx, interaction.Cmd, timeout)
 	interaction.Output = output
+	interaction.ErrorOutput = errOutput
 	// compare the results
 	if err == shell.ErrCancelled {
 		interaction.ResultCode = ResultCancelled
