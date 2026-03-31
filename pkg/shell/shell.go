@@ -69,9 +69,11 @@ func cleanEnv() []string {
 // StartShell starts a shell as a background process.
 // When mergeStderr is true, stderr from each command is redirected into stdout (2>&1).
 // When false, stderr is captured separately via a temp file and returned alongside stdout.
-func StartShell(shell string, mergeStderr bool) (Shell, error) {
+func StartShell(shell string, mergeStderr bool, noCleanEnv bool) (Shell, error) {
 	cmd := exec.Command(shell)
-	cmd.Env = cleanEnv()
+	if !noCleanEnv {
+		cmd.Env = cleanEnv()
+	}
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return Shell{}, fmt.Errorf("Unable to set up input stream for shell %s: %v", shell, err)

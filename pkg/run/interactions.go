@@ -68,7 +68,7 @@ func (runCtx *Context) performInteractions(ctx context.Context, inputfile string
 		return nil, err
 	}
 	// start a background shell, it will run until the function ends
-	currentShell, err := shell.StartShell(shellpath, runCtx.MergeStderr)
+	currentShell, err := shell.StartShell(shellpath, runCtx.MergeStderr, runCtx.NoCleanEnv)
 	if err != nil {
 		return nil, fmt.Errorf("unable to start shell: %v", err)
 	}

@@ -29,6 +29,7 @@ func init() {
 	runCmd.Flags().StringVarP(&runContext.ShellName, "shell", "s", "", "The shell to invoke (default: $SHELL)")
 	runCmd.Flags().BoolVarP(&runContext.FailureStops, "fail", "f", false, "Stop on the first failure")
 	runCmd.Flags().BoolVarP(&runContext.MergeStderr, "merge-stderr", "m", false, "Merge stderr into stdout (2>&1) instead of capturing separately")
+	runCmd.Flags().BoolVar(&runContext.NoCleanEnv, "no-clean-env", false, "Skip TERM=dumb/NO_COLOR=1 overrides (pass the user's environment unmodified)")
 	runCmd.Flags().StringVarP(&runContext.XMLOutputFile, "xml", "x", "", "Write results to the specified output file in JUnitXML format")
 	runCmd.Flags().BoolVarP(&runContext.ReplaceDots, "replace-dots-in-xml-classname", "d", true, "When using filenames as classnames, replace dots with a unicode circle")
 	runCmd.Flags().BoolVarP(&runContext.DryRun, "dry-run", "n", false, "Preview commands without executing them")

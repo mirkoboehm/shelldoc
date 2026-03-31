@@ -21,6 +21,7 @@ type Context struct {
 	FailureStops  bool
 	XMLOutputFile string
 	MergeStderr   bool
+	NoCleanEnv    bool
 	ReplaceDots   bool
 	DryRun        bool
 	Timeout       time.Duration
