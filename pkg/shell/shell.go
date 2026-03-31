@@ -27,9 +27,10 @@ var ErrCancelled = errors.New("command execution cancelled")
 
 // Shell represents the shell process that runs in the background and executes the commands.
 type Shell struct {
-	cmd    *exec.Cmd
-	stdin  io.WriteCloser
-	stdout io.ReadCloser
+	cmd         *exec.Cmd
+	stdin       io.WriteCloser
+	stdout      io.ReadCloser
+	mergeStderr bool
 }
 
 // DetectShell returns the path to the selected shell or the content of $SHELL
@@ -48,8 +49,10 @@ func DetectShell(selected string) (string, error) {
 	return selected, nil
 }
 
-// StartShell starts a shell as a background process
-func StartShell(shell string) (Shell, error) {
+// StartShell starts a shell as a background process.
+// When mergeStderr is true, stderr from each command is redirected into stdout (2>&1).
+// When false, stderr is captured separately via a temp file and returned alongside stdout.
+func StartShell(shell string, mergeStderr bool) (Shell, error) {
 	cmd := exec.Command(shell)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -63,37 +66,55 @@ func StartShell(shell string) (Shell, error) {
 	if err != nil {
 		return Shell{}, fmt.Errorf("Unable to start shell %s: %v", shell, err)
 	}
-	return Shell{cmd, stdin, stdout}, nil
+	return Shell{cmd, stdin, stdout, mergeStderr}, nil
 }
 
 // commandResult holds the result of a command execution
 type commandResult struct {
-	output []string
+	stdout []string
+	stderr []string
 	rc     int
 	err    error
 }
 
-// ExecuteCommand runs a command in the shell and returns its output and exit code.
+// ExecuteCommand runs a command in the shell and returns its stdout, stderr, exit code, and any error.
 // The context can be used to cancel execution (e.g., on SIGINT).
 // The timeout parameter specifies a per-command timeout (0 means no timeout).
-func (shell *Shell) ExecuteCommand(ctx context.Context, command string, timeout time.Duration) ([]string, int, error) {
+// When shell.mergeStderr is true, stderr is redirected into stdout via 2>&1 and the returned stderr slice is nil.
+// When false, stderr is captured to a temp file and returned separately.
+func (shell *Shell) ExecuteCommand(ctx context.Context, command string, timeout time.Duration) ([]string, []string, int, error) {
 	const (
 		beginMarker = ">>>>>>>>>>SHELLDOC_MARKER>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		endMarker   = "<<<<<<<<<<SHELLDOC_MARKER"
 	)
-	instruction := fmt.Sprintf("%s", strings.TrimSpace(command))
-	io.WriteString(shell.stdin, fmt.Sprintf("echo \"%s\"\n", beginMarker))
-	io.WriteString(shell.stdin, fmt.Sprintf("%s; echo \"%s $?\"\n", instruction, endMarker))
+
+	// Build the instruction, routing stderr as configured.
+	trimmed := strings.TrimSpace(command)
+	var stderrFile string
+	var instruction string
+	if shell.mergeStderr {
+		instruction = fmt.Sprintf("{ %s; } 2>&1; echo \"%s $?\"\n", trimmed, endMarker)
+	} else {
+		f, err := os.CreateTemp("", "shelldoc_stderr_*")
+		if err == nil {
+			stderrFile = f.Name()
+			f.Close()
+		}
+		instruction = fmt.Sprintf("{ %s; } 2>%s; echo \"%s $?\"\n", trimmed, stderrFile, endMarker)
+	}
 
 	beginEx := fmt.Sprintf("^%s$", beginMarker)
 	beginRx := regexp.MustCompile(beginEx)
 	endEx := fmt.Sprintf("^%s (.+)$", endMarker)
 	endRx := regexp.MustCompile(endEx)
 
+	io.WriteString(shell.stdin, fmt.Sprintf("echo \"%s\"\n", beginMarker))
+	io.WriteString(shell.stdin, instruction)
+
 	// Run the scanner in a goroutine to support timeout and cancellation
 	resultCh := make(chan commandResult, 1)
 	go func() {
-		var output []string
+		var stdout []string
 		var rc int
 		beginFound := false
 		scanner := bufio.NewScanner(shell.stdout)
@@ -110,35 +131,45 @@ func (shell *Shell) ExecuteCommand(ctx context.Context, command string, timeout 
 			if len(match) > 1 {
 				value, err := strconv.Atoi(match[1])
 				if err != nil {
-					resultCh <- commandResult{nil, -1, fmt.Errorf("unable to read exit code for shell command: %v", err)}
+					resultCh <- commandResult{nil, nil, -1, fmt.Errorf("unable to read exit code for shell command: %v", err)}
 					return
 				}
 				rc = value
 				break
 			}
-			output = append(output, line)
+			stdout = append(stdout, line)
 		}
-		resultCh <- commandResult{output, rc, nil}
+		// Read stderr from temp file if capturing separately
+		var stderr []string
+		if stderrFile != "" {
+			if data, err := os.ReadFile(stderrFile); err == nil {
+				os.Remove(stderrFile)
+				if len(data) > 0 {
+					stderr = strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+				}
+			}
+		}
+		resultCh <- commandResult{stdout, stderr, rc, nil}
 	}()
 
 	// Wait for result, timeout, or context cancellation
 	if timeout > 0 {
 		select {
 		case result := <-resultCh:
-			return result.output, result.rc, result.err
+			return result.stdout, result.stderr, result.rc, result.err
 		case <-time.After(timeout):
-			return nil, -1, ErrTimeout
+			return nil, nil, -1, ErrTimeout
 		case <-ctx.Done():
-			return nil, -1, ErrCancelled
+			return nil, nil, -1, ErrCancelled
 		}
 	}
 
 	// No timeout specified, wait for result or context cancellation
 	select {
 	case result := <-resultCh:
-		return result.output, result.rc, result.err
+		return result.stdout, result.stderr, result.rc, result.err
 	case <-ctx.Done():
-		return nil, -1, ErrCancelled
+		return nil, nil, -1, ErrCancelled
 	}
 }
 

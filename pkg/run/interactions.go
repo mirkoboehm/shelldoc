@@ -68,7 +68,7 @@ func (runCtx *Context) performInteractions(ctx context.Context, inputfile string
 		return nil, err
 	}
 	// start a background shell, it will run until the function ends
-	currentShell, err := shell.StartShell(shellpath)
+	currentShell, err := shell.StartShell(shellpath, runCtx.MergeStderr)
 	if err != nil {
 		return nil, fmt.Errorf("unable to start shell: %v", err)
 	}
@@ -108,6 +108,7 @@ func (runCtx *Context) performInteractions(ctx context.Context, inputfile string
 		testcase.Classname = inputfile // testcase is always returned, even if err is not nil
 		if len(runCtx.XMLOutputFile) > 0 {
 			testcase.SystemOut = strings.Join(interaction.Output, "\n")
+			testcase.SystemErr = strings.Join(interaction.ErrorOutput, "\n")
 		}
 		if runCtx.ReplaceDots {
 			testcase.Classname = strings.ReplaceAll(inputfile, ".", "●")
