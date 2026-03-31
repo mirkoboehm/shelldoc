@@ -30,6 +30,7 @@ type Shell struct {
 	cmd         *exec.Cmd
 	stdin       io.WriteCloser
 	stdout      io.ReadCloser
+	scanner     *bufio.Scanner
 	mergeStderr bool
 }
 
@@ -66,7 +67,7 @@ func StartShell(shell string, mergeStderr bool) (Shell, error) {
 	if err != nil {
 		return Shell{}, fmt.Errorf("Unable to start shell %s: %v", shell, err)
 	}
-	return Shell{cmd, stdin, stdout, mergeStderr}, nil
+	return Shell{cmd, stdin, stdout, bufio.NewScanner(stdout), mergeStderr}, nil
 }
 
 // commandResult holds the result of a command execution
@@ -117,9 +118,8 @@ func (shell *Shell) ExecuteCommand(ctx context.Context, command string, timeout 
 		var stdout []string
 		var rc int
 		beginFound := false
-		scanner := bufio.NewScanner(shell.stdout)
-		for scanner.Scan() {
-			line := scanner.Text()
+		for shell.scanner.Scan() {
+			line := shell.scanner.Text()
 			if beginRx.MatchString(line) {
 				beginFound = true
 				continue
